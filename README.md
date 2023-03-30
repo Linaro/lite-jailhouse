@@ -5,7 +5,7 @@ ARM64 archutecture.
 ## Requirements
 The sample was tested using a Intel based machine running Ubuntu 22.04 LTS,
 besides that you may need some extra resources:
- 
+
 * QEMU System with ARM64 support: `$ sudo apt install qemu-system `
 * QEMU ARM64 test image provided in: https://github.com/siemens/jailhouse-images
 * Also you'll need to install Zephyr RTOS: https://docs.zephyrproject.org/3.2.0/develop/getting_started/index.html
@@ -65,7 +65,7 @@ $ cd jailhouse-images
 $ ./start_qemu.sh arm64
 ```
 
-This will starts the Virtual Machine with the built image, also will directs 
+This will starts the Virtual Machine with the built image, also will directs
 the user to the termina, the default user is: root, and the password is: root
 
 The further acces to this VM will be done in other terminal windows through SSH
@@ -105,8 +105,8 @@ $ cd lite-jailhouse
 $ west build -p auto -bqemu_cortex_a53 zephyr_app
 ```
 
-Please mind due to the Jailhouse configuration, the application should be 
-loaded from the address 0x70000000, an overlay file creates this memory 
+Please mind due to the Jailhouse configuration, the application should be
+loaded from the address 0x70000000, an overlay file creates this memory
 area and overrides default zephyr sram-chosen symbol to select this area instead
 of the default pointed by 0x40000000.
 
@@ -123,7 +123,7 @@ The password is the same as mentioned before, root.
 ## Starting the Jailhouse Cell
 
 Now the VM has everything needed to start the Jailhouse application in the Zephyr side,
-to launch the application, go back to the jailhouse workspace tab, or otherwise ssh to 
+to launch the application, go back to the jailhouse workspace tab, or otherwise ssh to
 the VM again.
 
 Now follow the step by step below:
@@ -159,7 +159,7 @@ the cell, in case of updating the zephyr application:
 # jailhouse cell shutdown qemu-arm64-zephyr-demo
 ```
 
-With the step above, just repeat the deploy firmware step again and, after that, 
+With the step above, just repeat the deploy firmware step again and, after that,
 repeat the loading and start jailhouse steps to update the firmware.
 
 ## Expected results into the Jailhouse console
@@ -172,18 +172,57 @@ to this:
 Cell "qemu-arm64-zephyr-demo" can be loaded
 Started cell "qemu-arm64-zephyr-demo"
 *** Booting Zephyr OS build v3.3.0-rc1-58-g156c7cd21759 ***
-[0]: Hello Jailhouse, I'm: qemu_cortex_a53 
-[510]: Hello Jailhouse, I'm: qemu_cortex_a53 
-[1020]: Hello Jailhouse, I'm: qemu_cortex_a53 
-[1530]: Hello Jailhouse, I'm: qemu_cortex_a53 
-[2040]: Hello Jailhouse, I'm: qemu_cortex_a53 
-[2550]: Hello Jailhouse, I'm: qemu_cortex_a53 
-[3060]: Hello Jailhouse, I'm: qemu_cortex_a53 
-[3570]: Hello Jailhouse, I'm: qemu_cortex_a53 
-[4080]: Hello Jailhouse, I'm: qemu_cortex_a53 
-[4590]: Hello Jailhouse, I'm: qemu_cortex_a53 
-[5100]: Hello Jailhouse, I'm: qemu_cortex_a53 
+[0]: Hello Jailhouse, I'm: qemu_cortex_a53
+[510]: Hello Jailhouse, I'm: qemu_cortex_a53
+[1020]: Hello Jailhouse, I'm: qemu_cortex_a53
+[1530]: Hello Jailhouse, I'm: qemu_cortex_a53
+[2040]: Hello Jailhouse, I'm: qemu_cortex_a53
+[2550]: Hello Jailhouse, I'm: qemu_cortex_a53
+[3060]: Hello Jailhouse, I'm: qemu_cortex_a53
+[3570]: Hello Jailhouse, I'm: qemu_cortex_a53
+[4080]: Hello Jailhouse, I'm: qemu_cortex_a53
+[4590]: Hello Jailhouse, I'm: qemu_cortex_a53
+[5100]: Hello Jailhouse, I'm: qemu_cortex_a53
 
+```
+
+## Special steps for running on ZCU102:
+It is possible to run zephyr under zcu102 emulator through QEMU, to do that
+you need to supply its configuration, so before building jailhouse, copy
+jailhouse-configs/zephyr-zcu102-demo.c into your /path/to/jailhouse_folder/configs/arm64/
+then rebuild and install jailhouse on your target platform (QEMU or board). The do:
+
+* Rebuild Zephyr app now for ZCU102:
+```
+$ cd lite-jailhouse
+$ west build -p auto -bzynqmp_zcu102 zephyr_app
+```
+
+* Copy zephyr.bin file to your target board / emulator;
+* Enable jailhouse :
+```
+# jailhouse enable /path/to/jailhouse/cells/zynqmp-zcu102.cell
+```
+* Create the zephyr cell:
+```
+# jailhouse cell create /path/to/jailhouse/cells/zephyr-zcu102-demo.cell
+```
+* Load the zephyr app to the cell (assuming only zephyr cell created):
+```
+# jailhouse cell load 1 /path/to/zephyr.bin
+```
+* Then enable the cell:
+```
+# jailhouse cell start 1
+```
+By checking the UART1 from target or emulator you may able to see the result:
+
+```
+*** Booting Zephyr OS build v3.3.0-rc1-58-g156c7cd21759 ***
+[1]: Hello Jailhouse, I'm: zynqmp_zcu102
+[510]: Hello Jailhouse, I'm: zynqmp_zcu102
+[1020]: Hello Jailhouse, I'm: zynqmp_zcu102
+[1530]: Hello Jailhouse, I'm: zynqmp_zcu102
 ```
 
 ## TODO's

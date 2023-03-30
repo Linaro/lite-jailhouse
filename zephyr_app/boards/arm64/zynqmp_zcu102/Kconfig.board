@@ -1,0 +1,8 @@
+# Copyright (c) 2023 Linaro
+# SPDX-License-Identifier: Apache-2.0
+
+config BOARD_ZYNQMP_ZCU102
+	bool "Bare minimum supported Xilinx ZynqMP board"
+	depends on SOC_ZYNQMP_ZCU102
+	select ARM64
+

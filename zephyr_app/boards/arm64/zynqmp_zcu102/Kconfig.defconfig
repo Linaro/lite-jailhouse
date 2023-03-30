@@ -1,0 +1,12 @@
+# Copyright (c) 2023 Linaro
+# SPDX-License-Identifier: Apache-2.0
+
+if BOARD_ZYNQMP_ZCU102
+
+config BUILD_OUTPUT_BIN
+	default y
+
+config BOARD
+	default "zynqmp_zcu102"
+
+endif # BOARD_ZYNQMP_ZCU102
