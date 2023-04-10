@@ -10,8 +10,5 @@
 
 void main(void)
 {
-	while(1) {
-		printk("[%d]: Hello Jailhouse, I'm: %s \n", k_uptime_get_32(),CONFIG_BOARD);
-		k_msleep(500);
-	}
+	printk("[%d]: Hello Jailhouse, I'm: %s \n", k_uptime_get_32(),CONFIG_BOARD);
 }

@@ -1,17 +1,15 @@
 /*
  * Jailhouse, a Linux-based partitioning hypervisor
  *
- * Configuration for Xilinx ZynqMP ZCU102 eval board
+ * Configuration for Avnet Ultra96 board
  *
- * Copyright (c) Siemens AG, 2016
+ * Copyright (c) Siemens AG, 2016-2020
  *
  * Authors:
  *  Jan Kiszka <jan.kiszka@siemens.com>
  *
  * This work is licensed under the terms of the GNU GPL, version 2.  See
  * the COPYING file in the top-level directory.
- *
- * Reservation via device tree: 0x800000000..0x83fffffff
  */
 
 #include <jailhouse/types.h>
@@ -23,7 +21,7 @@ struct {
 	struct jailhouse_memory mem_regions[12];
 	struct jailhouse_irqchip irqchips[1];
 	struct jailhouse_pci_device pci_devices[2];
-	union jailhouse_stream_id stream_ids[3];
+	union jailhouse_stream_id stream_ids[2];
 } __attribute__((packed)) config = {
 	.header = {
 		.signature = JAILHOUSE_SYSTEM_SIGNATURE,
@@ -31,11 +29,11 @@ struct {
 		.architecture = JAILHOUSE_ARM64,
 		.flags = JAILHOUSE_SYS_VIRTUAL_DEBUG_CONSOLE,
 		.hypervisor_memory = {
-			.phys_start = 0x800000000,
-			.size =       0x000400000,
+			.phys_start = 0x7fc00000,
+			.size =       0x00400000,
 		},
 		.debug_console = {
-			.address = 0xff000000,
+			.address = 0xff010000,
 			.size = 0x1000,
 			.type = JAILHOUSE_CON_TYPE_XUARTPS,
 			.flags = JAILHOUSE_CON_ACCESS_MMIO |
@@ -45,7 +43,7 @@ struct {
 			.pci_mmconfig_base = 0xfc000000,
 			.pci_mmconfig_end_bus = 0,
 			.pci_is_virtual = 1,
-			.pci_domain = -1,
+
 			.iommu_units = {
 				{
 					.type = JAILHOUSE_IOMMU_ARM_MMU500,
@@ -53,6 +51,7 @@ struct {
 					.size = 0x20000,
 				},
 			},
+
 			.arm = {
 				.gic_version = 2,
 				.gicd_base = 0xf9010000,
@@ -63,7 +62,7 @@ struct {
 			},
 		},
 		.root_cell = {
-			.name = "ZynqMP-ZCU102",
+			.name = "Ultra96",
 
 			.cpu_set_size = sizeof(config.cpus),
 			.num_memory_regions = ARRAY_SIZE(config.mem_regions),
@@ -80,37 +79,52 @@ struct {
 	},
 
 	.mem_regions = {
-		/* IVSHMEM shared memory region for 0001:00:00.0 */
-		JAILHOUSE_SHMEM_NET_REGIONS(0x800400000, 0),
-		/* IVSHMEM shared memory region for 0001:00:01.0 */
-		JAILHOUSE_SHMEM_NET_REGIONS(0x800500000, 0),
-		/* MMIO (permissive) */ {
+		/* IVSHMEM shared memory regions for 00:00.0 (demo) */
+		{
+			.phys_start = 0x7faf0000,
+			.virt_start = 0x7faf0000,
+			.size = 0x1000,
+			.flags = JAILHOUSE_MEM_READ,
+		},
+		{
+			.phys_start = 0x7faf1000,
+			.virt_start = 0x7faf1000,
+			.size = 0x9000,
+			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE,
+		},
+		{
+			.phys_start = 0x7fafa000,
+			.virt_start = 0x7fafa000,
+			.size = 0x2000,
+			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE,
+		},
+		{
+			.phys_start = 0x7fafc000,
+			.virt_start = 0x7fafc000,
+			.size = 0x2000,
+			.flags = JAILHOUSE_MEM_READ,
+		},
+		{
+			.phys_start = 0x7fafe000,
+			.virt_start = 0x7fafe000,
+			.size = 0x2000,
+			.flags = JAILHOUSE_MEM_READ,
+		},
+		/* IVSHMEM shared memory region for 00:01.0 */
+		JAILHOUSE_SHMEM_NET_REGIONS(0x7fb00000, 0),
+		/* MMIO */ {
 			.phys_start = 0xfd000000,
 			.virt_start = 0xfd000000,
-			.size =	      0x03000000,
+			.size =	      0xFFD80000 - 0xfd000000,
 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
 				JAILHOUSE_MEM_IO,
 		},
 		/* RAM */ {
 			.phys_start = 0x0,
 			.virt_start = 0x0,
-			.size = 0x80000000,
+			.size = 0x7fa10000,
 			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
 				JAILHOUSE_MEM_EXECUTE,
-		},
-		/* RAM */ {
-			.phys_start = 0x800600000,
-			.virt_start = 0x800600000,
-			.size = 0x7fa00000,
-			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
-				JAILHOUSE_MEM_EXECUTE,
-		},
-		/* PCI host bridge */ {
-			.phys_start = 0x8000000000,
-			.virt_start = 0x8000000000,
-			.size = 0x1000000,
-			.flags = JAILHOUSE_MEM_READ | JAILHOUSE_MEM_WRITE |
-				JAILHOUSE_MEM_IO,
 		},
 	},
 
@@ -125,22 +139,22 @@ struct {
 	},
 
 	.pci_devices = {
-		/* 0001:00:01.0 */ {
+		{ /* IVSHMEM 0001:00:00.0 (demo) */
+			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
+			.domain = 1,
+			.bdf = 0 << 3,
+			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
+			.shmem_regions_start = 0,
+			.shmem_dev_id = 0,
+			.shmem_peers = 3,
+			.shmem_protocol = JAILHOUSE_SHMEM_PROTO_UNDEFINED,
+		},
+		{ /* IVSHMEM 0001:00:01.0 (networking) */
 			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
 			.domain = 1,
 			.bdf = 1 << 3,
 			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
-			.shmem_regions_start = 0,
-			.shmem_dev_id = 0,
-			.shmem_peers = 2,
-			.shmem_protocol = JAILHOUSE_SHMEM_PROTO_VETH,
-		},
-		/* 0001:00:02.0 */ {
-			.type = JAILHOUSE_PCI_TYPE_IVSHMEM,
-			.domain = 1,
-			.bdf = 2 << 3,
-			.bar_mask = JAILHOUSE_IVSHMEM_BAR_MASK_INTX,
-			.shmem_regions_start = 4,
+			.shmem_regions_start = 5,
 			.shmem_dev_id = 0,
 			.shmem_peers = 2,
 			.shmem_protocol = JAILHOUSE_SHMEM_PROTO_VETH,
@@ -149,16 +163,12 @@ struct {
 
 	.stream_ids = {
 		{
-			.mmu500.id = 0x860,
-			.mmu500.mask_out = 0x0,
-		},
-		{
-			.mmu500.id = 0x861,
-			.mmu500.mask_out = 0x0,
-		},
-		{
 			.mmu500.id = 0x870,
-			.mmu500.mask_out = 0xf,
+			.mmu500.mask_out = 0x0,
+		},
+		{
+			.mmu500.id = 0x871,
+			.mmu500.mask_out = 0x0,
 		},
 	},
 };
